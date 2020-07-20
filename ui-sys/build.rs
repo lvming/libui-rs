@@ -1,8 +1,8 @@
-extern crate cmake;
 extern crate bindgen;
+extern crate cmake;
 
-use cmake::Config;
 use bindgen::Builder as BindgenBuilder;
+use cmake::Config;
 
 use std::env;
 use std::path::{Path, PathBuf};
@@ -45,6 +45,7 @@ fn main() {
     // Deterimine build platform
     let target = env::var("TARGET").unwrap();
     let msvc = target.contains("msvc");
+    let gnu = target.contains("gnu");
     let apple = target.contains("apple");
 
     // Build libui if needed. Otherwise, assume it's in lib/
@@ -52,6 +53,9 @@ fn main() {
     if cfg!(feature = "build") {
         let mut cfg = Config::new("libui");
         cfg.build_target("").profile("release");
+        if gnu {
+            cfg.define("BUILD_SHARED_LIBS", "OFF");
+        }
         if apple {
             cfg.cxxflag("--stdlib=libc++");
         }
@@ -63,8 +67,7 @@ fn main() {
         }
         dst = dst.join(&postfix);
     } else {
-        dst = env::current_dir()
-            .expect("Unable to retrieve current directory location.");
+        dst = env::current_dir().expect("Unable to retrieve current directory location.");
         dst.push("lib");
     }
 
